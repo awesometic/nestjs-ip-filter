@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Inject, Injectable } from "@nestjs/common";
+import { CanActivate, ExecutionContext, HttpException, Inject, Injectable } from "@nestjs/common";
 import { Observable } from "rxjs";
 import * as requestIp from '@supercharge/request-ip';
 import { IpFilterService } from "./ipfilter.service";
@@ -18,7 +18,6 @@ export class IpFilterGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const ipAddress: string = requestIp.getClientIp(request);
 
-    const defaultBehavior = this.ipFilterService.defaultBehavior;
     const whitelist = this.ipFilterService.whitelist;
     const blacklist = this.ipFilterService.blacklist;
 
@@ -35,10 +34,18 @@ export class IpFilterGuard implements CanActivate {
     // Check the plain text blacklists
     for (const blackIp of blacklist) {
       if (blackIp === ipAddress) {
-        return false;
+        return this.denyThisRequest();
       }
     }
 
-    return defaultBehavior;
+    return this.ipFilterService.defaultBehavior;
+  }
+
+  private denyThisRequest() {
+    if (this.ipFilterService.useHttpException) {
+      throw new HttpException(this.ipFilterService.httpExceptionMessage, 403);
+    } else {
+      return false;
+    }
   }
 }

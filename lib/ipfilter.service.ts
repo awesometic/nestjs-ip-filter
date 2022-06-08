@@ -7,6 +7,8 @@ export class IpFilterService extends ConsoleLogger {
   private appName = '@awesometic/nestjs-ip-filter';
 
   defaultBehavior: boolean;
+  useHttpException: boolean;
+  httpExceptionMessage: string;
   private _whitelist: string[];
   private _blacklist: string[];
 
@@ -17,6 +19,9 @@ export class IpFilterService extends ConsoleLogger {
     super();
 
     this.defaultBehavior = options.defaultBehavior === 'allow' ? true : false;
+    this.useHttpException = options.useHttpException ?? false;
+    this.httpExceptionMessage = options.httpExceptionMessage ?? 'Forbidden resource';
+
     this._whitelist = Object.assign([], options.whitelist ?? []);
     this._blacklist = Object.assign([], options.blacklist ?? []);
   }

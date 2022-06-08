@@ -2,6 +2,8 @@ import { ConsoleLoggerOptions, ModuleMetadata, Type } from "@nestjs/common";
 
 export type IpFilterModuleOptions = {
   defaultBehavior: 'allow' | 'deny',
+  useHttpException?: boolean,
+  httpExceptionMessage?: string,
   whitelist?: string[],
   blacklist?: string[],
 } & ConsoleLoggerOptions;
