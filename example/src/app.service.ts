@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { IpFilterService } from 'nestjs-ip-filter';
-import { IPFILTER_TOKEN } from '../../dist';
+import { IpFilterService, IPFILTER_TOKEN } from 'nestjs-ip-filter';
 
 @Injectable()
 export class AppService {

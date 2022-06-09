@@ -1,24 +1,24 @@
 import { Module } from '@nestjs/common';
-import { IpFilter } from 'nestjs-ip-filter';
+import { IpFilter, IpFilterModuleOptions } from 'nestjs-ip-filter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { IpRepositoryModule } from './ip-repository/ip-repository.module';
+import { IpRepositoryService } from './ip-repository/ip-repository.service';
 
 @Module({
   imports: [
     /**
-     * '::ffff:127.0.0.1' is from the `curl` command on iTerm2
      * Allowing the IPs from the whitelist is prior to denying from the blacklist
-     * 
-     * Test command: curl -X GET -H "Content-Type: application/json" http://localhost:3001
      */
-    IpFilter.forRoot({
-      defaultBehavior: 'allow',
-      whitelist: [
-        '::ffff:127.0.0.1'
-      ],
-      blacklist: [
-        '::ffff:127.0.0.1'
-      ],
+    IpFilter.forRootAsync({
+      imports: [ IpRepositoryModule ],
+      inject: [ IpRepositoryService ],
+      useFactory: async (ipRepositoryService: IpRepositoryService) => {
+        return {
+          defaultBehavior: 'allow',
+          whitelist: ipRepositoryService.getWhitelistIpAddresses(),
+        } as IpFilterModuleOptions;
+      }
     }),
   ],
   controllers: [AppController],
