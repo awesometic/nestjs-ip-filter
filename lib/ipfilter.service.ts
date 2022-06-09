@@ -4,9 +4,12 @@ import { IPFILTER_MODULE_OPTIONS } from "./ipfilter.constants";
 
 @Injectable()
 export class IpFilterService {
+
   defaultBehavior: boolean;
   useHttpException: boolean;
   httpExceptionMessage: string;
+  httpExceptionStatusCode: number;
+
   private _whitelist: string[];
   private _blacklist: string[];
 
@@ -17,6 +20,7 @@ export class IpFilterService {
     this.defaultBehavior = options.defaultBehavior === 'allow' ? true : false;
     this.useHttpException = options.useHttpException ?? false;
     this.httpExceptionMessage = options.httpExceptionMessage ?? 'Forbidden resource';
+    this.httpExceptionStatusCode = options.httpExceptionStatusCode ?? 403;
 
     this._whitelist = Object.assign([], options.whitelist ?? []);
     this._blacklist = Object.assign([], options.blacklist ?? []);

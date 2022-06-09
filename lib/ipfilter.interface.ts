@@ -2,8 +2,11 @@ import { ModuleMetadata, Type } from "@nestjs/common";
 
 export type IpFilterModuleOptions = {
   defaultBehavior: 'allow' | 'deny',
+
   useHttpException?: boolean,
   httpExceptionMessage?: string,
+  httpExceptionStatusCode?: number,
+
   whitelist?: string[],
   blacklist?: string[],
 };
