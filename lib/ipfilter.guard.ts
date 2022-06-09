@@ -42,10 +42,14 @@ export class IpFilterGuard implements CanActivate {
   }
 
   private denyThisRequest() {
+    if (this.ipFilterService.denyHandler) {
+      return this.ipFilterService.denyHandler.handle();
+    }
+
     if (this.ipFilterService.useHttpException) {
       throw new HttpException(this.ipFilterService.httpExceptionMessage, 403);
-    } else {
-      return false;
     }
+
+    return false;
   }
 }

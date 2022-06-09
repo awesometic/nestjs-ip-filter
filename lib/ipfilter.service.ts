@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { IpFilterModuleOptions } from "./ipfilter.interface";
+import { IpFilterDenyHandler, IpFilterModuleOptions } from "./ipfilter.interface";
 import { IPFILTER_MODULE_OPTIONS } from "./ipfilter.constants";
 
 @Injectable()
@@ -10,6 +10,8 @@ export class IpFilterService {
   httpExceptionMessage: string;
   httpExceptionStatusCode: number;
 
+  denyHandler: IpFilterDenyHandler;
+
   private _whitelist: string[];
   private _blacklist: string[];
 
@@ -18,9 +20,12 @@ export class IpFilterService {
     readonly options: IpFilterModuleOptions,
   ) {
     this.defaultBehavior = options.defaultBehavior === 'allow' ? true : false;
+
     this.useHttpException = options.useHttpException ?? false;
     this.httpExceptionMessage = options.httpExceptionMessage ?? 'Forbidden resource';
     this.httpExceptionStatusCode = options.httpExceptionStatusCode ?? 403;
+
+    this.denyHandler = options.denyHandler;
 
     this._whitelist = Object.assign([], options.whitelist ?? []);
     this._blacklist = Object.assign([], options.blacklist ?? []);

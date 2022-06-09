@@ -7,9 +7,15 @@ export type IpFilterModuleOptions = {
   httpExceptionMessage?: string,
   httpExceptionStatusCode?: number,
 
+  denyHandler?: IpFilterDenyHandler,
+
   whitelist?: string[],
   blacklist?: string[],
 };
+
+export interface IpFilterDenyHandler {
+  handle(): boolean;
+}
 
 export interface IpFilterOptionsFactory {
   createIpFilterModuleOptions(): Promise<IpFilterModuleOptions> | IpFilterModuleOptions;
