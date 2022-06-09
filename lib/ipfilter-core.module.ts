@@ -32,6 +32,7 @@ export class IpFilterCoreModule {
 
     return {
       module: IpFilterCoreModule,
+      imports: options.imports,
       providers: [
         ...this.createAsyncProviders(options),
         provider,
