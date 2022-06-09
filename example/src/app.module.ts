@@ -15,7 +15,6 @@ import { IpRepositoryService } from './ip-repository/ip-repository.service';
       inject: [ IpRepositoryService ],
       useFactory: async (ipRepositoryService: IpRepositoryService) => {
         return {
-          defaultBehavior: 'allow',
           whitelist: ipRepositoryService.getWhitelistIpAddresses(),
         } as IpFilterModuleOptions;
       }

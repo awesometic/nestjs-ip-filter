@@ -1,16 +1,10 @@
 import { ModuleMetadata, Type } from "@nestjs/common";
 
 export type IpFilterModuleOptions = {
-  defaultBehavior: 'allow' | 'deny',
-
-  useHttpException?: boolean,
-  httpExceptionMessage?: string,
-  httpExceptionStatusCode?: number,
-
-  denyHandler?: IpFilterDenyHandler,
-
   whitelist?: string[],
   blacklist?: string[],
+
+  useHttpException?: boolean,
 };
 
 export interface IpFilterDenyHandler {

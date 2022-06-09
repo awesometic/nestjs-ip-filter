@@ -29,12 +29,17 @@ export class IpFilterCoreModule {
       provide: IPFILTER_TOKEN,
       useFactory: (options: IpFilterModuleOptions) => new IpFilterService(options),
     };
+    const ipFilterGuardProvider = {
+      provide: APP_GUARD,
+      useClass: IpFilterGuard,
+    };
 
     return {
       module: IpFilterCoreModule,
       imports: options.imports,
       providers: [
         ...this.createAsyncProviders(options),
+        ipFilterGuardProvider,
         provider,
       ],
       exports: [provider],

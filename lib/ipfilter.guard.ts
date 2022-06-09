@@ -21,35 +21,28 @@ export class IpFilterGuard implements CanActivate {
     const whitelist = this.ipFilterService.whitelist;
     const blacklist = this.ipFilterService.blacklist;
 
-    // TODO: Remove this debugging message in production
-    console.log(`From IP address: ${ipAddress}`);
+    let approved = false;
 
-    // Check the plain text whitelists
-    for (const whiteIp of whitelist) {
-      if (whiteIp === ipAddress) {
-        return true;
-      }
+    if (whitelist.length > 0) {
+      approved = whitelist.some((item) => {
+        return new RegExp(item).test(ipAddress);
+      });
     }
 
-    // Check the plain text blacklists
-    for (const blackIp of blacklist) {
-      if (blackIp === ipAddress) {
-        return this.denyThisRequest();
-      }
+    if (blacklist.length > 0) {
+      approved = blacklist.some((item) => {
+        return new RegExp(item).test(ipAddress);
+      });
     }
 
-    return this.ipFilterService.defaultBehavior;
-  }
-
-  private denyThisRequest() {
-    if (this.ipFilterService.denyHandler) {
-      return this.ipFilterService.denyHandler.handle();
+    if (!approved && this.ipFilterService.useHttpException) {
+      throw new HttpException({
+        clientIp: ipAddress,
+        whitelist: whitelist,
+        blacklist: blacklist
+      }, 403);
     }
 
-    if (this.ipFilterService.useHttpException) {
-      throw new HttpException(this.ipFilterService.httpExceptionMessage, 403);
-    }
-
-    return false;
+    return approved;
   }
 }
