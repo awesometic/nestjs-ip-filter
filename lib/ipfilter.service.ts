@@ -1,11 +1,9 @@
-import { ConsoleLogger, Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { IpFilterModuleOptions } from "./ipfilter.interface";
 import { IPFILTER_MODULE_OPTIONS } from "./ipfilter.constants";
 
 @Injectable()
-export class IpFilterService extends ConsoleLogger {
-  private appName = '@awesometic/nestjs-ip-filter';
-
+export class IpFilterService {
   defaultBehavior: boolean;
   useHttpException: boolean;
   httpExceptionMessage: string;
@@ -16,8 +14,6 @@ export class IpFilterService extends ConsoleLogger {
     @Inject(IPFILTER_MODULE_OPTIONS)
     readonly options: IpFilterModuleOptions,
   ) {
-    super();
-
     this.defaultBehavior = options.defaultBehavior === 'allow' ? true : false;
     this.useHttpException = options.useHttpException ?? false;
     this.httpExceptionMessage = options.httpExceptionMessage ?? 'Forbidden resource';

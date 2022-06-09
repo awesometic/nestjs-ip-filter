@@ -1,4 +1,4 @@
-import { ConsoleLoggerOptions, ModuleMetadata, Type } from "@nestjs/common";
+import { ModuleMetadata, Type } from "@nestjs/common";
 
 export type IpFilterModuleOptions = {
   defaultBehavior: 'allow' | 'deny',
@@ -6,7 +6,7 @@ export type IpFilterModuleOptions = {
   httpExceptionMessage?: string,
   whitelist?: string[],
   blacklist?: string[],
-} & ConsoleLoggerOptions;
+};
 
 export interface IpFilterOptionsFactory {
   createIpFilterModuleOptions(): Promise<IpFilterModuleOptions> | IpFilterModuleOptions;
