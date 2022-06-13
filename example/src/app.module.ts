@@ -18,6 +18,7 @@ import { IpRepositoryService } from './ip-repository/ip-repository.service';
       useFactory: async (ipRepositoryService: IpRepositoryService) => {
         return {
           whitelist: ipRepositoryService.getWhitelistIpAddresses(),
+          // blacklist: [ '127.0.0.1' ],
           useDenyException: true,
         } as IpFilterModuleOptions;
       }
