@@ -1,8 +1,9 @@
-import { CanActivate, ExecutionContext, HttpException, Inject, Injectable } from "@nestjs/common";
+import { CanActivate, ExecutionContext, Inject, Injectable } from "@nestjs/common";
 import { Observable } from "rxjs";
 import * as requestIp from '@supercharge/request-ip';
 import { IpFilterService } from "./ipfilter.service";
 import { IPFILTER_TOKEN } from "./ipfilter.constants";
+import { IpFilterDenyException } from "./ipfilter-deny.exception";
  
 @Injectable()
 export class IpFilterGuard implements CanActivate {
@@ -35,8 +36,8 @@ export class IpFilterGuard implements CanActivate {
       });
     }
 
-    if (!approved && this.ipFilterService.useHttpException) {
-      throw new HttpException({
+    if (!approved && this.ipFilterService.useDenyException) {
+      throw new IpFilterDenyException({
         clientIp: ipAddress,
         whitelist: whitelist,
         blacklist: blacklist

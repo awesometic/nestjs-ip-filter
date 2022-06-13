@@ -1,11 +1,11 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { IpFilterDenyHandler, IpFilterModuleOptions } from "./ipfilter.interface";
+import { IpFilterModuleOptions } from "./ipfilter.interface";
 import { IPFILTER_MODULE_OPTIONS } from "./ipfilter.constants";
 
 @Injectable()
 export class IpFilterService {
 
-  useHttpException: boolean;
+  useDenyException: boolean;
 
   private _whitelist: string[];
   private _blacklist: string[];
@@ -14,7 +14,7 @@ export class IpFilterService {
     @Inject(IPFILTER_MODULE_OPTIONS)
     readonly options: IpFilterModuleOptions,
   ) {
-    this.useHttpException = options.useHttpException ?? false;
+    this.useDenyException = options.useDenyException ?? false;
 
     this._whitelist = Object.assign([], options.whitelist ?? []);
     this._blacklist = Object.assign([], options.blacklist ?? []);

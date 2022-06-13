@@ -4,7 +4,7 @@ export type IpFilterModuleOptions = {
   whitelist?: string[],
   blacklist?: string[],
 
-  useHttpException?: boolean,
+  useDenyException?: boolean,
 };
 
 export interface IpFilterDenyHandler {

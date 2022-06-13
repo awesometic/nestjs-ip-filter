@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { IpFilter, IpFilterModuleOptions } from 'nestjs-ip-filter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { IpFilterDenyExceptionFilter } from './exception/ipfilter-exception-filter.exception';
 import { IpRepositoryModule } from './ip-repository/ip-repository.module';
 import { IpRepositoryService } from './ip-repository/ip-repository.service';
 
@@ -16,11 +18,18 @@ import { IpRepositoryService } from './ip-repository/ip-repository.service';
       useFactory: async (ipRepositoryService: IpRepositoryService) => {
         return {
           whitelist: ipRepositoryService.getWhitelistIpAddresses(),
+          useDenyException: true,
         } as IpFilterModuleOptions;
       }
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: IpFilterDenyExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}
