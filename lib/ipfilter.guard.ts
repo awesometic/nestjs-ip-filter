@@ -4,7 +4,7 @@ import * as requestIp from '@supercharge/request-ip';
 import { IpFilterService } from "./ipfilter.service";
 import { IPFILTER_TOKEN } from "./ipfilter.constants";
 import { IpFilterDenyException } from "./ipfilter-deny.exception";
- 
+
 @Injectable()
 export class IpFilterGuard implements CanActivate {
 

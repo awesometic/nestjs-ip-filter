@@ -52,7 +52,7 @@ export class IpFilterCoreModule {
     }
 
     const useClass = options.useClass as Type<IpFilterOptionsFactory>;
-    
+
     return [
       this.createAsnycOptionsProvider(options),
       {
