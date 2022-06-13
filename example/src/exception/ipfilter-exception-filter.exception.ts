@@ -12,6 +12,8 @@ export class IpFilterDenyExceptionFilter implements ExceptionFilter {
     const statusFromIpFilter = exception.getStatus();
     const responseFromIpFilter = exception.getResponse();
 
+    console.log(`Client IP is "${responseFromIpFilter['clientIp']}"`);
+
     response
       .status(statusFromIpFilter)
       .json({
