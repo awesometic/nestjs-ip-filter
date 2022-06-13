@@ -31,7 +31,7 @@ export class IpFilterGuard implements CanActivate {
     }
 
     if (blacklist.length > 0) {
-      approved = blacklist.some((item) => {
+      approved = !blacklist.some((item) => {
         return new RegExp(item).test(ipAddress);
       });
     }
