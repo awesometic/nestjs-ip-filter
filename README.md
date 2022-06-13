@@ -132,6 +132,23 @@ So that, you can handle the denied request and can send a custom response on tha
 
 When the Guard throws an exception, it will also carry some informative data like the incoming IP address, current whitelist and blacklist.
 
+### Inject IpFilterService
+
+If you want, you can inject `IpFilterService` into your code and can see current options you put when you initilize it. And, you can set the whitelist and the blacklist too.
+
+Inject the service using the `IPFILTER_TOKEN` module.
+
+```typescript
+@Injectable()
+export class SomeService {
+  constructor(
+    @inject(IPFILTER_TOKEN)
+    ipFilterService: IpFilterService
+  ) { }
+  // ...
+}
+```
+
 ## Example project
 
 This repository contains an example project of this `nestjs-ip-filter` package.
