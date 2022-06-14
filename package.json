@@ -1,25 +1,38 @@
 {
   "name": "@awesometic/nestjs-ip-filter",
   "private": true,
-  "version": "0.0.1",
-  "description": "A NPM package that filters requests based on IP address",
+  "version": "0.1.0",
+  "description": "A NestJS Guard for filtering IP addresses",
+  "author": "Deokgyu Yang <secugyu@gmail.com>",
+  "keywords": [
+    "nestjs",
+    "ip filter",
+    "whitelist",
+    "blacklist"
+  ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/awesometic/nestjs-ip-filter.git"
+  },
+  "homepage": "https://github.com/awesometic/nestjs-ip-filter",
+  "bugs": {
+    "url": "https://github.com/awesometic/nestjs-ip-filter/issues"
+  },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "rm -rf dist && tsc -p tsconfig.json",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format": "prettier --write \"lib/**/*.ts\"",
     "prepublish:npm": "npm run build",
     "publish:npm": "npm publish --access public",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "eslint \"{lib,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand"
   },
   "dependencies": {
     "@nestjs/common": "^8.1.1",
