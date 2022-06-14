@@ -3,7 +3,6 @@ import { IpFilterService, IPFILTER_TOKEN } from 'nestjs-ip-filter';
 
 @Injectable()
 export class AppService {
-
   constructor(
     @Inject(IPFILTER_TOKEN)
     private readonly ipFilterService: IpFilterService,

@@ -1,10 +1,9 @@
-import { Inject, Injectable } from "@nestjs/common";
-import { IpFilterModuleOptions } from "./ipfilter.interface";
-import { IPFILTER_MODULE_OPTIONS } from "./ipfilter.constants";
+import { Inject, Injectable } from '@nestjs/common';
+import { IpFilterModuleOptions } from './ipfilter.interface';
+import { IPFILTER_MODULE_OPTIONS } from './ipfilter.constants';
 
 @Injectable()
 export class IpFilterService {
-
   useDenyException: boolean;
 
   private _whitelist: string[];
@@ -22,7 +21,7 @@ export class IpFilterService {
 
   get whitelist() {
     return this._whitelist;
-  };
+  }
 
   set whitelist(whitelist: string[]) {
     this._whitelist = whitelist;
@@ -30,7 +29,7 @@ export class IpFilterService {
 
   get blacklist() {
     return this._blacklist;
-  };
+  }
 
   set blacklist(blacklist: string[]) {
     this._blacklist = blacklist;

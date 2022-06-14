@@ -1,4 +1,9 @@
-import { Catch, ArgumentsHost, HttpException, ExceptionFilter } from '@nestjs/common';
+import {
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  ExceptionFilter,
+} from '@nestjs/common';
 import { Request, Response } from 'express';
 import { IpFilterDenyException } from 'nestjs-ip-filter';
 
@@ -14,13 +19,11 @@ export class IpFilterDenyExceptionFilter implements ExceptionFilter {
 
     console.log(`Client IP is "${responseFromIpFilter['clientIp']}"`);
 
-    response
-      .status(statusFromIpFilter)
-      .json({
-        statusCode: statusFromIpFilter,
-        timestamp: new Date().toISOString(),
-        ipFilterData: responseFromIpFilter,
-        path: request.url,
-      });
+    response.status(statusFromIpFilter).json({
+      statusCode: statusFromIpFilter,
+      timestamp: new Date().toISOString(),
+      ipFilterData: responseFromIpFilter,
+      path: request.url,
+    });
   }
 }

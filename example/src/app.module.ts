@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
-import { IpFilter, IpFilterModuleOptions } from 'nestjs-ip-filter';
+import { IpFilter } from 'nestjs-ip-filter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { IpFilterDenyExceptionFilter } from './exception/ipfilter-exception-filter.exception';
@@ -13,8 +13,8 @@ import { IpRepositoryService } from './ip-repository/ip-repository.service';
      * Allowing the IPs from the whitelist is prior to denying from the blacklist
      */
     IpFilter.forRootAsync({
-      imports: [ IpRepositoryModule ],
-      inject: [ IpRepositoryService ],
+      imports: [IpRepositoryModule],
+      inject: [IpRepositoryService],
       useFactory: async (ipRepositoryService: IpRepositoryService) => ({
         whitelist: ipRepositoryService.getWhitelistIpAddresses(),
         // blacklist: [ '127.0.0.1' ],
