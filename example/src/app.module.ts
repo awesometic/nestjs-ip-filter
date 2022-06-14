@@ -15,13 +15,11 @@ import { IpRepositoryService } from './ip-repository/ip-repository.service';
     IpFilter.forRootAsync({
       imports: [ IpRepositoryModule ],
       inject: [ IpRepositoryService ],
-      useFactory: async (ipRepositoryService: IpRepositoryService) => {
-        return {
-          whitelist: ipRepositoryService.getWhitelistIpAddresses(),
-          // blacklist: [ '127.0.0.1' ],
-          useDenyException: true,
-        } as IpFilterModuleOptions;
-      }
+      useFactory: async (ipRepositoryService: IpRepositoryService) => ({
+        whitelist: ipRepositoryService.getWhitelistIpAddresses(),
+        // blacklist: [ '127.0.0.1' ],
+        useDenyException: true,
+      }),
     }),
   ],
   controllers: [AppController],
