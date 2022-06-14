@@ -67,11 +67,9 @@ Or, use `forRootAsync` for the provided IP addresses from the other Provider, su
 IpFilter.forRootAsync({
   imports: [ MyConfigModule ],
   inject: [ MyConfigService ],
-  useFactory: async (myConfigService: MyConfigService) => {
-    return {
-      whitelist: myConfigService.getWhitelist(),
-    } as IpFilterModuleOptions;
-  }
+  useFactory: async (myConfigService: MyConfigService) => ({
+    whitelist: myConfigService.getWhitelist(),
+  }),
 }),
 ```
 
@@ -92,12 +90,10 @@ Use `blacklist` option to let the Guart know the list.
 IpFilter.forRootAsync({
   imports: [ MyConfigModule ],
   inject: [ MyConfigService ],
-  useFactory: async (myConfigService: MyConfigService) => {
-    return {
-      whitelist: myConfigService.getWhitelist(),
-      blacklist: myConfigService.getBlacklist(),
-    } as IpFilterModuleOptions;
-  }
+  useFactory: async (myConfigService: MyConfigService) => ({
+    whitelist: myConfigService.getWhitelist(),
+    blacklist: myConfigService.getBlacklist(),
+  }),
 }),
 ```
 
@@ -116,13 +112,11 @@ If you want to throw that `IpFilterDenyException` when denial, set the option `u
 IpFilter.forRootAsync({
   imports: [ MyConfigModule ],
   inject: [ MyConfigService ],
-  useFactory: async (myConfigService: MyConfigService) => {
-    return {
-      whitelist: myConfigService.getWhitelist(),
-      blacklist: myConfigService.getBlacklist(),
-      useDenyException: true,
-    } as IpFilterModuleOptions;
-  }
+  useFactory: async (myConfigService: MyConfigService) => ({
+    whitelist: myConfigService.getWhitelist(),
+    blacklist: myConfigService.getBlacklist(),
+    useDenyException: true,
+  }),
 }),
 ```
 
@@ -143,8 +137,8 @@ Inject the service using the `IPFILTER_TOKEN` module.
 export class SomeService {
   constructor(
     @inject(IPFILTER_TOKEN)
-    ipFilterService: IpFilterService
-  ) { }
+    private readonly ipFilterService: IpFilterService
+  ) {}
   // ...
 }
 ```
