@@ -55,13 +55,13 @@ export class IpFilterCoreModule {
     options: IpFilterModuleAsyncOptions,
   ): Provider[] {
     if (options.useExisting || options.useFactory) {
-      return [this.createAsnycOptionsProvider(options)];
+      return [this.createAsyncOptionsProvider(options)];
     }
 
     const useClass = options.useClass as Type<IpFilterOptionsFactory>;
 
     return [
-      this.createAsnycOptionsProvider(options),
+      this.createAsyncOptionsProvider(options),
       {
         provide: useClass,
         useClass,
@@ -69,7 +69,7 @@ export class IpFilterCoreModule {
     ];
   }
 
-  private static createAsnycOptionsProvider(
+  private static createAsyncOptionsProvider(
     options: IpFilterModuleAsyncOptions,
   ): Provider {
     if (options.useFactory) {
