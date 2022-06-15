@@ -1,6 +1,5 @@
 {
   "name": "nestjs-ip-filter",
-  "private": true,
   "version": "0.1.0",
   "description": "A NestJS Guard for filtering IP addresses",
   "author": "Deokgyu Yang <secugyu@gmail.com>",
