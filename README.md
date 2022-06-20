@@ -9,7 +9,7 @@ It will work using the built-in feature in NestJS, **Guard**, so it works like a
 Simply, install using NPM by the following command.
 
 ```bash
-npm install @awesometic/nestjs-ip-filter
+npm install nestjs-ip-filter
 ```
 
 ## Usage
@@ -141,6 +141,13 @@ export class SomeService {
   ) {}
   // ...
 }
+```
+
+Then you can edit the whitelist, blacklist IP addresses dynamically.
+
+```typescript
+this.ipFilterService.whitelist = [ {NEW_WHITELIST} ];
+this.ipFilterService.blacklist = [ {NEW_BLACKLIST} ];
 ```
 
 ## Example project
