@@ -4,6 +4,8 @@ Now we can filter the incoming requests by setting the whitelist and the blackli
 
 It will work using the built-in feature in NestJS, **Guard**, so it works like a charm as it should be and as much as it should do.
 
+The Guard recognizes the requester's IP address using [@supercharge/request-ip](https://www.npmjs.com/package/request-ip) package.
+
 ## How to install
 
 Simply, install using NPM by the following command.
@@ -16,7 +18,7 @@ npm install nestjs-ip-filter
 
 ### Use Regex for the IP list
 
-You can use Regex format string for the IP ranges.
+You can use the Regex format string for the IP ranges.
 
 For a simple example, if you want to allow the private network hosts in `192.168.0.1/16`, you can write the Regex string like the below.
 
@@ -38,13 +40,13 @@ Check the other use cases.
 (^11[0-9].*)
 ```
 
-And, writing in this way also works on this pacakge.
+And, writing in this way also works on this package.
 
 But be aware of that you should write the Regex string very carefully to avoid allowing unwanted incoming IP addresses.
 
-### Baisc usage for Whitelist
+### Basic usage for Whitelist
 
-You can initialize the dedicated Guard using non-async or async mode, as like the other NestJS packages support.
+You can initialize the dedicated Guard using non-async or async mode, as the other NestJS packages support.
 
 Use `forRoot` for the static IP address list.
 
@@ -81,7 +83,7 @@ After setting up the `IpFilter` module with the `forRoot*` method, this will acc
 
 You can deny the requests that are from the blacklist IPs.
 
-Use `blacklist` option to let the Guart know the list.
+Use `blacklist` option to let the Guard know the list.
 
 ```typescript
 // If it would like to get the whitelist IPs from a config file,
@@ -128,7 +130,7 @@ When the Guard throws an exception, it will also carry some informative data lik
 
 ### Inject IpFilterService
 
-If you want, you can inject `IpFilterService` into your code and can see current options you put when you initilize it. And, you can set the whitelist and the blacklist too.
+If you want, you can inject `IpFilterService` into your code and can see current options you put when you initialize it. And, you can set the whitelist and the blacklist too.
 
 Inject the service using the `IPFILTER_TOKEN` module.
 
