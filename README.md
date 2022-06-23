@@ -18,6 +18,9 @@ npm install nestjs-ip-filter
 
 ### Use Regex for the IP list
 
+> In Express-based framework, the incoming IP address will have prefix `::ffff:` characters. So if you have put `(^192.168.)` into the whitelist, it won't work because that regex describes it must have number `1` as a first character.
+> So for now, you should put that prefix for your regex string like `(^::ffff:192.168.)`. Will patch the source codes in the near future.
+
 You can use the Regex format string for the IP ranges.
 
 For a simple example, if you want to allow the private network hosts in `192.168.0.1/16`, you can write the Regex string like the below.
