@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IpFilterModuleOptions } from './ipfilter.interface';
-import { IPFILTER_MODULE_OPTIONS } from './ipfilter.constants';
+import { MODULE_OPTIONS_TOKEN } from './ipfilter.module-definition';
 
 @Injectable()
 export class IpFilterService {
@@ -10,7 +10,7 @@ export class IpFilterService {
   private _blacklist: string[];
 
   constructor(
-    @Inject(IPFILTER_MODULE_OPTIONS)
+    @Inject(MODULE_OPTIONS_TOKEN)
     readonly options: IpFilterModuleOptions,
   ) {
     this.useDenyException = options.useDenyException ?? false;

@@ -1,23 +1,22 @@
 import { DynamicModule, Module } from '@nestjs/common';
-import { IpFilterCoreModule } from './ipfilter-core.module';
-import {
-  IpFilterModuleAsyncOptions,
-  IpFilterModuleOptions,
-} from './ipfilter.interface';
+import { APP_GUARD } from '@nestjs/core';
+import { IPFILTER_TOKEN } from './ipfilter.constants';
+import { IpFilterGuard } from './ipfilter.guard';
+import { ConfigurableModuleClass } from './ipfilter.module-definition';
+import { IpFilterService } from './ipfilter.service';
 
-Module({});
-export class IpFilter {
-  static forRoot(options: IpFilterModuleOptions): DynamicModule {
-    return {
-      module: IpFilter,
-      imports: [IpFilterCoreModule.forRoot(options)],
-    };
-  }
+const ipFilterServiceProvider = {
+  provide: IPFILTER_TOKEN,
+  useClass: IpFilterService,
+};
 
-  static forRootAsync(options: IpFilterModuleAsyncOptions): DynamicModule {
-    return {
-      module: IpFilter,
-      imports: [IpFilterCoreModule.forRootAsync(options)],
-    };
-  }
-}
+const ipFilterGuardProvider = {
+  provide: APP_GUARD,
+  useClass: IpFilterGuard,
+};
+
+@Module({
+  providers: [ipFilterServiceProvider, ipFilterGuardProvider],
+  exports: [ipFilterServiceProvider],
+})
+export class IpFilter extends ConfigurableModuleClass {}
