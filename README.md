@@ -51,10 +51,10 @@ But be aware of that you should write the Regex string very carefully to avoid a
 
 You can initialize the dedicated Guard using non-async or async mode, as the other NestJS packages support.
 
-Use `forRoot` for the static IP address list.
+Use `register` for the static IP address list.
 
 ```typescript
-IpFilter.forRoot({
+IpFilter.register({
   whitelist: [
     '(^::1)',
     '(^192.168.)',
@@ -63,13 +63,13 @@ IpFilter.forRoot({
 }),
 ```
 
-Or, use `forRootAsync` for the provided IP addresses from the other Provider, such as ConfigModule or RepositoryModule for your database.
+Or, use `registerAsync` for the provided IP addresses from the other Provider, such as ConfigModule or RepositoryModule for your database.
 
 ```typescript
 // If it would like to get the whitelist IPs from a config file,
 // and if MyConfigModule provides that
 
-IpFilter.forRootAsync({
+IpFilter.registerAsync({
   imports: [ MyConfigModule ],
   inject: [ MyConfigService ],
   useFactory: async (myConfigService: MyConfigService) => ({
@@ -80,7 +80,7 @@ IpFilter.forRootAsync({
 
 Yeah, you can use your method to provide some async data.
 
-After setting up the `IpFilter` module with the `forRoot*` method, this will accept only the incoming requests for the given whitelist IP addresses.
+After setting up the `IpFilter` module with the `register*` method, this will accept only the incoming requests for the given whitelist IP addresses.
 
 ### Blacklist
 
@@ -92,7 +92,7 @@ Use `blacklist` option to let the Guard know the list.
 // If it would like to get the whitelist IPs from a config file,
 // and if MyConfigModule provides that
 
-IpFilter.forRootAsync({
+IpFilter.registerAsync({
   imports: [ MyConfigModule ],
   inject: [ MyConfigService ],
   useFactory: async (myConfigService: MyConfigService) => ({
@@ -114,7 +114,7 @@ If you want to throw that `IpFilterDenyException` when denial, set the option `u
 // If it would like to get the whitelist IPs from a config file,
 // and if MyConfigModule provides that
 
-IpFilter.forRootAsync({
+IpFilter.registerAsync({
   imports: [ MyConfigModule ],
   inject: [ MyConfigService ],
   useFactory: async (myConfigService: MyConfigService) => ({
