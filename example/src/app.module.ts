@@ -12,7 +12,7 @@ import { IpRepositoryService } from './ip-repository/ip-repository.service';
     /**
      * Allowing the IPs from the whitelist is prior to denying from the blacklist
      */
-    IpFilter.forRootAsync({
+    IpFilter.registerAsync({
       imports: [IpRepositoryModule],
       inject: [IpRepositoryService],
       useFactory: async (ipRepositoryService: IpRepositoryService) => ({
