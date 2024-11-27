@@ -34,7 +34,7 @@
     "@nestjs/testing": "9.0.9",
     "@types/express": "5.0.0",
     "@types/jest": "29.5.14",
-    "@types/node": "18.19.65",
+    "@types/node": "18.19.66",
     "@types/supertest": "6.0.2",
     "@typescript-eslint/eslint-plugin": "8.15.0",
     "@typescript-eslint/parser": "8.15.0",
