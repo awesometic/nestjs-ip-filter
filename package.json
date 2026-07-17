@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@nestjs/common": "9.0.9",
-    "@nestjs/core": "9.0.9",
+    "@nestjs/core": "11.1.18",
     "@nestjs/platform-express": "9.0.9",
     "@supercharge/request-ip": "1.2.0",
     "reflect-metadata": "0.1.13",
