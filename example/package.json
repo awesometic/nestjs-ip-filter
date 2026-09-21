@@ -22,7 +22,7 @@
   "dependencies": {
     "nestjs-ip-filter": "file:../",
     "@nestjs/common": "9.0.9",
-    "@nestjs/core": "9.0.9",
+    "@nestjs/core": "11.1.18",
     "@nestjs/platform-express": "9.0.9",
     "reflect-metadata": "0.1.13",
     "rimraf": "3.0.2",
