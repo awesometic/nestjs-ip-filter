@@ -2,7 +2,6 @@
   "packageRules": [{
     "depTypeList": ["devDependencies"],
     "automerge": true,
-    "ignoreTests": true
   }],
   "extends": [
     "config:base"
