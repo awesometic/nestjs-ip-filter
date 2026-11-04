@@ -4,11 +4,10 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import * as requestIp from '@supercharge/request-ip';
-import { IpFilterService } from './ipfilter.service';
 import { IPFILTER_TOKEN } from './ipfilter.constants';
 import { IpFilterDenyException } from './ipfilter-deny.exception';
+// Type-only: a runtime import would cycle through ipfilter.module-definition.
+import type { IpFilterService } from './ipfilter.service';
 
 @Injectable()
 export class IpFilterGuard implements CanActivate {
@@ -17,38 +16,19 @@ export class IpFilterGuard implements CanActivate {
     private readonly ipFilterService: IpFilterService,
   ) {}
 
-  canActivate(
-    context: ExecutionContext,
-  ): Promise<boolean> | Observable<boolean> | boolean {
-    const request = context.switchToHttp().getRequest();
-    const ipAddress: string = requestIp.getClientIp(request);
-
-    const whitelist = this.ipFilterService.whitelist;
-    const blacklist = this.ipFilterService.blacklist;
-
-    let approved = false;
-
-    if (whitelist.length > 0) {
-      approved = whitelist.some((item) => {
-        return new RegExp(item).test(ipAddress);
-      });
+  canActivate(context: ExecutionContext): boolean {
+    // Only HTTP requests carry a client IP here; GraphQL, WebSocket and RPC pass through unfiltered.
+    if (context.getType() !== 'http') {
+      return true;
     }
-
-    if (blacklist.length > 0) {
-      approved = !blacklist.some((item) => {
-        return new RegExp(item).test(ipAddress);
-      });
-    }
+    // req.ip honors the app's "trust proxy" setting, so forwarded headers are only used when trusted.
+    const ipAddress: string | undefined = context
+      .switchToHttp()
+      .getRequest().ip;
+    const approved = this.ipFilterService.isAllowed(ipAddress);
 
     if (!approved && this.ipFilterService.useDenyException) {
-      throw new IpFilterDenyException(
-        {
-          clientIp: ipAddress,
-          whitelist: whitelist,
-          blacklist: blacklist,
-        },
-        403,
-      );
+      throw new IpFilterDenyException({ clientIp: ipAddress }, 403);
     }
 
     return approved;

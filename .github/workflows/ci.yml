@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+        nest: [11, 12]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm install --no-save @nestjs/common@${{ matrix.nest }} @nestjs/core@${{ matrix.nest }} @nestjs/platform-express@${{ matrix.nest }} @nestjs/testing@${{ matrix.nest }}
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test
