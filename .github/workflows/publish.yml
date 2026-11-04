@@ -1,0 +1,33 @@
+name: Publish
+
+on:
+  push:
+    tags: ['v*']
+  # For a tag pushed before this workflow existed, e.g. v1.0.0.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to publish (e.g. v1.0.0)
+        required: true
+
+permissions:
+  id-token: write # npm trusted publishing (OIDC)
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - run: npm ci
+      - name: Check that the tag matches package.json
+        run: test "v$(node -p "require('./package.json').version")" = "${{ inputs.tag || github.ref_name }}"
+      # prepublishOnly runs lint, test and build.
+      - run: npm publish
