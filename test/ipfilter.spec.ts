@@ -170,3 +170,20 @@ describe('deny exception', () => {
     assert.deepEqual(res.body, { clientIp: '11.0.0.1' });
   });
 });
+
+describe('global option', () => {
+  const statusOf = (path: string) =>
+    request(app!.getHttpServer()).get(path).set('X-Forwarded-For', '11.0.0.1');
+
+  it('guards every route by default', async () => {
+    app = await createApp({ whitelist: ['10.0.0.0/8'] });
+    assert.equal((await statusOf('/')).status, 403);
+    assert.equal((await statusOf('/guarded')).status, 403);
+  });
+
+  it('guards only routes using IpFilterGuard with global: false', async () => {
+    app = await createApp({ whitelist: ['10.0.0.0/8'], global: false });
+    assert.equal((await statusOf('/')).status, 200);
+    assert.equal((await statusOf('/guarded')).status, 403);
+  });
+});

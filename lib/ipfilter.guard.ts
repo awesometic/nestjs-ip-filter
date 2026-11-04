@@ -6,7 +6,8 @@ import {
 } from '@nestjs/common';
 import { IPFILTER_TOKEN } from './ipfilter.constants';
 import { IpFilterDenyException } from './ipfilter-deny.exception';
-import { IpFilterService } from './ipfilter.service';
+// Type-only: a runtime import would cycle through ipfilter.module-definition.
+import type { IpFilterService } from './ipfilter.service';
 
 @Injectable()
 export class IpFilterGuard implements CanActivate {
