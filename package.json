@@ -18,53 +18,52 @@
   "bugs": {
     "url": "https://github.com/awesometic/nestjs-ip-filter/issues"
   },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "prebuild": "rimraf dist",
     "build": "rm -rf dist && tsc -p tsconfig.json",
-    "format": "prettier --write \"{lib,example}/**/*.ts\"",
-    "prepublish:npm": "npm run lint && npm run format && npm run build",
-    "publish:npm": "npm publish --access public",
-    "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
-    "lint": "eslint \"{lib,apps,libs,test,example/src}/**/*.ts\" --fix",
+    "format": "prettier --write \"{lib,test}/**/*.ts\"",
+    "lint": "eslint \"{lib,test}/**/*.ts\"",
     "test": "jest",
-    "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand"
+    "prepublishOnly": "npm run lint && npm test && npm run build"
   },
   "dependencies": {
-    "@nestjs/common": "9.0.9",
-    "@nestjs/core": "9.0.9",
-    "@nestjs/platform-express": "9.0.9",
-    "@supercharge/request-ip": "1.2.0",
-    "reflect-metadata": "0.1.13",
-    "rimraf": "3.0.2",
-    "rxjs": "7.5.6"
+    "@supercharge/request-ip": "1.2.0"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^11.0.0 || ^12.0.0",
+    "@nestjs/core": "^11.0.0 || ^12.0.0",
+    "reflect-metadata": "^0.1.13 || ^0.2.0",
+    "rxjs": "^7.1.0"
   },
   "devDependencies": {
-    "@nestjs/cli": "10.4.7",
-    "@nestjs/schematics": "9.0.1",
-    "@nestjs/testing": "9.0.9",
+    "@eslint/js": "10.0.1",
+    "@nestjs/common": "12.3.2",
+    "@nestjs/core": "12.3.2",
+    "@nestjs/platform-express": "12.3.2",
+    "@nestjs/testing": "12.3.2",
     "@types/express": "5.0.6",
     "@types/jest": "30.0.0",
-    "@types/node": "26.6.5",
+    "@types/node": "20.19.43",
     "@types/supertest": "7.2.1",
-    "@typescript-eslint/eslint-plugin": "8.72.1",
-    "@typescript-eslint/parser": "8.72.1",
-    "eslint": "9.39.5",
-    "eslint-config-google": "0.14.0",
+    "eslint": "10.14.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.7",
     "jest": "30.5.2",
     "prettier": "3.9.10",
-    "source-map-support": "0.5.21",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
     "supertest": "7.3.1",
     "ts-jest": "29.4.15",
-    "ts-loader": "9.6.2",
-    "ts-node": "10.9.2",
-    "tsconfig-paths": "4.2.0",
-    "typescript": "7.0.2"
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -72,15 +71,14 @@
       "json",
       "ts"
     ],
-    "rootDir": "lib",
-    "testRegex": ".*\\.spec\\.ts$",
+    "rootDir": ".",
+    "testRegex": "test/.*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
+      "^.+\\.ts$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "lib/**/*.ts"
     ],
-    "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   }
 }

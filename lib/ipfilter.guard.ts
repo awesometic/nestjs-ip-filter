@@ -21,7 +21,7 @@ export class IpFilterGuard implements CanActivate {
     context: ExecutionContext,
   ): Promise<boolean> | Observable<boolean> | boolean {
     const request = context.switchToHttp().getRequest();
-    const ipAddress: string = requestIp.getClientIp(request);
+    const ipAddress = requestIp.getClientIp(request) ?? '';
 
     const whitelist = this.ipFilterService.whitelist;
     const blacklist = this.ipFilterService.blacklist;

@@ -1,4 +1,4 @@
-import { DynamicModule, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { IPFILTER_TOKEN } from './ipfilter.constants';
 import { IpFilterGuard } from './ipfilter.guard';

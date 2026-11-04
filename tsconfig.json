@@ -6,19 +6,11 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "es2017",
-    "sourceMap": true,
+    "target": "es2022",
+    "sourceMap": false,
+    "rootDir": "./lib",
     "outDir": "./dist",
-    "baseUrl": "./",
-    "incremental": true,
     "skipLibCheck": true
   },
-  "include": [
-    "lib/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "**/*.spec.ts",
-    "tests",
-  ]
+  "include": ["lib/**/*"]
 }
