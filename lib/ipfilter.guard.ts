@@ -4,11 +4,9 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import * as requestIp from '@supercharge/request-ip';
-import { IpFilterService } from './ipfilter.service';
 import { IPFILTER_TOKEN } from './ipfilter.constants';
 import { IpFilterDenyException } from './ipfilter-deny.exception';
+import { IpFilterService } from './ipfilter.service';
 
 @Injectable()
 export class IpFilterGuard implements CanActivate {
@@ -17,35 +15,19 @@ export class IpFilterGuard implements CanActivate {
     private readonly ipFilterService: IpFilterService,
   ) {}
 
-  canActivate(
-    context: ExecutionContext,
-  ): Promise<boolean> | Observable<boolean> | boolean {
-    const request = context.switchToHttp().getRequest();
-    const ipAddress = requestIp.getClientIp(request) ?? '';
-
-    const whitelist = this.ipFilterService.whitelist;
-    const blacklist = this.ipFilterService.blacklist;
-
-    let approved = false;
-
-    if (whitelist.length > 0) {
-      approved = whitelist.some((item) => {
-        return new RegExp(item).test(ipAddress);
-      });
-    }
-
-    if (blacklist.length > 0) {
-      approved = !blacklist.some((item) => {
-        return new RegExp(item).test(ipAddress);
-      });
-    }
+  canActivate(context: ExecutionContext): boolean {
+    // req.ip honors the app's "trust proxy" setting, so forwarded headers are only used when trusted.
+    const ipAddress: string | undefined = context
+      .switchToHttp()
+      .getRequest().ip;
+    const approved = this.ipFilterService.isAllowed(ipAddress);
 
     if (!approved && this.ipFilterService.useDenyException) {
       throw new IpFilterDenyException(
         {
           clientIp: ipAddress,
-          whitelist: whitelist,
-          blacklist: blacklist,
+          whitelist: this.ipFilterService.whitelist,
+          blacklist: this.ipFilterService.blacklist,
         },
         403,
       );

@@ -23,4 +23,4 @@ jobs:
       - run: npm install --no-save @nestjs/common@${{ matrix.nest }} @nestjs/core@${{ matrix.nest }} @nestjs/platform-express@${{ matrix.nest }} @nestjs/testing@${{ matrix.nest }}
       - run: npm run lint
       - run: npm run build
-      - run: npm test -- --passWithNoTests
+      - run: npm test

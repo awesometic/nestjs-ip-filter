@@ -10,7 +10,12 @@
     "sourceMap": false,
     "rootDir": "./lib",
     "outDir": "./dist",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": [
+      "node"
+    ]
   },
-  "include": ["lib/**/*"]
+  "include": [
+    "lib/**/*"
+  ]
 }
