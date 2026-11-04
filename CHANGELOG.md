@@ -14,6 +14,7 @@
 
 ### Fixed
 
+- The guard crashed on GraphQL requests and denied every WebSocket/RPC message; non-HTTP contexts now pass through unfiltered.
 - A rule like `10.0.0.1` also matched `110.0.0.15` (unanchored regex).
 - A forged `X-Forwarded-For` header bypassed the whitelist.
 - With both lists set, the whitelist was ignored.

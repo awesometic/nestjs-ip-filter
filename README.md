@@ -2,6 +2,8 @@
 
 A NestJS guard that allows or denies requests by client IP address, using whitelists and blacklists of IPv4/IPv6 addresses and CIDR ranges.
 
+It filters HTTP requests. GraphQL, WebSocket and microservice (RPC) contexts are not filtered and pass through.
+
 ## Requirements
 
 - NestJS 11 or 12

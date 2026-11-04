@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { afterEach, describe, it } from 'node:test';
-import { INestApplication } from '@nestjs/common';
+import { ExecutionContext, INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import {
   IPFILTER_TOKEN,
   IpFilter,
+  IpFilterGuard,
   IpFilterModuleOptions,
   IpFilterService,
 } from '../lib';
@@ -265,4 +266,18 @@ describe('module registration', () => {
     app = await createApp({ whitelist: ['10.0.0.0/8'], global: false });
     assert.equal((await statusOf('/feature')).status, 403);
   });
+});
+
+describe('non-HTTP contexts', () => {
+  for (const type of ['rpc', 'ws', 'graphql']) {
+    it(`lets ${type} requests through`, async () => {
+      app = await createApp({ whitelist: [] });
+      const guard = new IpFilterGuard(app.get<IpFilterService>(IPFILTER_TOKEN));
+      const context = {
+        getType: () => type,
+        switchToHttp: () => ({ getRequest: () => undefined }),
+      } as unknown as ExecutionContext;
+      assert.equal(guard.canActivate(context), true);
+    });
+  }
 });

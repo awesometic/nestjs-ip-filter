@@ -17,6 +17,10 @@ export class IpFilterGuard implements CanActivate {
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
+    // Only HTTP requests carry a client IP here; GraphQL, WebSocket and RPC pass through unfiltered.
+    if (context.getType() !== 'http') {
+      return true;
+    }
     // req.ip honors the app's "trust proxy" setting, so forwarded headers are only used when trusted.
     const ipAddress: string | undefined = context
       .switchToHttp()
