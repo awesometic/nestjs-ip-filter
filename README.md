@@ -7,7 +7,7 @@ It filters HTTP requests. GraphQL, WebSocket and microservice (RPC) contexts are
 ## Requirements
 
 - NestJS 11 or 12
-- Node.js `^20.19.0 || >=22.12.0`
+- Node.js `>=22.12.0`
 - The Express platform (`@nestjs/platform-express`)
 
 ## Install
@@ -153,7 +153,7 @@ Setting a whitelist on an app that had none switches it to whitelist mode, so on
 - **Configure at least one list** (`null` counts as not configured). 0.x denied everything when both lists were empty. Set `whitelist: []` to keep that behavior, for example when the lists are filled at runtime.
 - **`IpFilterDenyException` carries only `{ clientIp }`.** 0.x also sent both lists to the denied client.
 - **The getters return `string[] | undefined`.**
-- NestJS 11 or 12 and Node.js `^20.19.0 || >=22.12.0` are required.
+- NestJS 11 or 12 and Node.js `>=22.12.0` are required.
 
 ## Development
 
