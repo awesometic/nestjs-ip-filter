@@ -11,11 +11,14 @@ export const {
 } = new ConfigurableModuleBuilder<IpFilterModuleOptions>()
   .setExtras({ global: true }, (definition, extras) => ({
     ...definition,
-    providers: extras.global
-      ? [
-          ...(definition.providers ?? []),
-          { provide: APP_GUARD, useClass: IpFilterGuard },
-        ]
-      : definition.providers,
+    // Global for DI so IpFilterGuard and IPFILTER_TOKEN resolve in every module.
+    global: true,
+    providers:
+      extras.global !== false
+        ? [
+            ...(definition.providers ?? []),
+            { provide: APP_GUARD, useClass: IpFilterGuard },
+          ]
+        : definition.providers,
   }))
   .build();

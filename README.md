@@ -16,7 +16,7 @@ npm install nestjs-ip-filter
 
 ## Usage
 
-Import `IpFilter` in your root module. The guard then applies to every route.
+Import `IpFilter` once, in your root module. The guard then applies to every route, and `IpFilterGuard` and `IPFILTER_TOKEN` are available in every module.
 
 ```typescript
 import { Module } from '@nestjs/common';
@@ -55,7 +55,8 @@ Each entry is an IPv4 or IPv6 address, or a CIDR range:
 '2001:db8::/32'; // an IPv6 range
 ```
 
-IPv4-mapped IPv6 client addresses (`::ffff:10.1.2.3`) match IPv4 rules.
+IPv4-mapped IPv6 client addresses (`::ffff:10.1.2.3`) match IPv4 rules, so write IPv4 ranges as IPv4 CIDR.
+A mapped rule with an IPv6 prefix under 96 (`::ffff:192.168.0.0/16`) is rejected: as an IPv6 range it would span all of IPv4.
 An invalid entry throws when the module starts or when a list is set, so a typo never silently matches nothing.
 
 ### How a request is evaluated
@@ -93,18 +94,20 @@ Without it, every request behind a proxy appears to come from the proxy's addres
 
 ### Apply to some routes only
 
-Set `global: false` and add `IpFilterGuard` where you need it.
+Set `global: false` in the root module and add `IpFilterGuard` where you need it, in any module.
 
 ```typescript
 @Module({
-  imports: [IpFilter.register({ whitelist: ['10.0.0.0/8'], global: false })],
-  controllers: [AdminController],
+  imports: [IpFilter.register({ whitelist: ['10.0.0.0/8'], global: false }), AdminModule],
 })
-export class AdminModule {}
+export class AppModule {}
 
 @Controller('admin')
 @UseGuards(IpFilterGuard)
 export class AdminController {}
+
+@Module({ controllers: [AdminController] })
+export class AdminModule {}
 ```
 
 ### Handle denied requests
@@ -131,20 +134,21 @@ Inject `IpFilterService` with `IPFILTER_TOKEN`. Setting a list replaces it and a
 export class IpRulesService {
   constructor(@Inject(IPFILTER_TOKEN) private readonly ipFilter: IpFilterService) {}
 
-  allowOffice(cidr: string) {
-    this.ipFilter.whitelist = [...(this.ipFilter.whitelist ?? []), cidr];
+  block(address: string) {
+    this.ipFilter.blacklist = [...(this.ipFilter.blacklist ?? []), address];
   }
 }
 ```
 
 The getters return a copy of the list, or `undefined` when that list is not configured. Emptying a list keeps the mode: an empty whitelist still allows nobody.
+Setting a whitelist on an app that had none switches it to whitelist mode, so only the whitelisted addresses pass from then on.
 
 ## Migrating from 0.x
 
-- **Rules are addresses and CIDR ranges, not regular expressions.** Rewrite `'(^192.168.)'` as `'192.168.0.0/16'` and drop the `::ffff:` prefix workaround. A regex entry now throws at startup.
+- **Rules are addresses and CIDR ranges, not regular expressions.** Rewrite `'(^192.168.)'` as `'192.168.0.0/16'` and drop the `::ffff:` prefix workaround (write `'192.168.0.0/16'`, not `'::ffff:192.168.0.0/16'`). A regex entry now throws at startup.
 - **The client IP is `req.ip`.** 0.x read `X-Forwarded-For` and similar headers from anyone, which allowed spoofing. Behind a proxy, set [`trust proxy`](#behind-a-proxy-or-load-balancer).
 - **The blacklist no longer overrides the whitelist.** With both lists set, a client must be in the whitelist and not in the blacklist; 0.x let anyone outside the blacklist through.
-- **Configure at least one list.** 0.x denied everything when both lists were empty. Set `whitelist: []` to keep that behavior, for example when the lists are filled at runtime.
+- **Configure at least one list** (`null` counts as not configured). 0.x denied everything when both lists were empty. Set `whitelist: []` to keep that behavior, for example when the lists are filled at runtime.
 - **`IpFilterDenyException` carries only `{ clientIp }`.** 0.x also sent both lists to the denied client.
 - **The getters return `string[] | undefined`.**
 - NestJS 11 or 12 and Node.js `^20.19.0 || >=22.12.0` are required.

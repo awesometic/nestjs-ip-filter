@@ -2,8 +2,13 @@ import assert from 'node:assert/strict';
 import { afterEach, describe, it } from 'node:test';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { IPFILTER_TOKEN, IpFilterModuleOptions, IpFilterService } from '../lib';
-import { createApp } from './app';
+import {
+  IPFILTER_TOKEN,
+  IpFilter,
+  IpFilterModuleOptions,
+  IpFilterService,
+} from '../lib';
+import { createApp, createAppFrom } from './app';
 
 const LOCALHOST = ['127.0.0.1', '::1'];
 
@@ -71,6 +76,7 @@ describe('rule matching', () => {
     '(^192.168.)',
     '10.0.0.0/33',
     'fe80::/129',
+    '::ffff:192.168.0.0/16',
   ]) {
     it(`rejects the invalid rule ${rule} at startup`, async () => {
       await assert.rejects(createApp({ whitelist: [rule] }), (err: Error) =>
@@ -188,5 +194,75 @@ describe('global option', () => {
     app = await createApp({ whitelist: ['10.0.0.0/8'], global: false });
     assert.equal((await statusOf('/')).status, 200);
     assert.equal((await statusOf('/guarded')).status, 403);
+  });
+});
+
+describe('config validation', () => {
+  it('treats null lists as not configured', async () => {
+    const options = {
+      whitelist: null,
+      blacklist: null,
+    } as unknown as IpFilterModuleOptions;
+    await assert.rejects(createApp(options), /whitelist.*blacklist/);
+    await assert.rejects(
+      createAppFrom(
+        IpFilter.registerAsync({
+          useFactory: () =>
+            ({ whitelist: null }) as unknown as IpFilterModuleOptions,
+        }),
+      ),
+      /whitelist.*blacklist/,
+    );
+  });
+
+  it('names a non-string entry', async () => {
+    await assert.rejects(
+      createApp({ whitelist: [10 as unknown as string] }),
+      /"10"/,
+    );
+  });
+
+  it('rejects a list that is not an array', async () => {
+    await assert.rejects(
+      createApp({ whitelist: '10.0.0.1' as unknown as string[] }),
+      /array/,
+    );
+  });
+
+  it('accepts IPv4-mapped ranges written as IPv6 prefixes of 96 or more', async () => {
+    assert.equal(
+      await statusFor({ whitelist: ['::ffff:10.0.0.0/104'] }, '10.1.2.3'),
+      200,
+    );
+    assert.equal(
+      await statusFor({ whitelist: ['::ffff:10.0.0.0/104'] }, '11.0.0.1'),
+      403,
+    );
+  });
+});
+
+describe('module registration', () => {
+  const statusOf = (path: string) =>
+    request(app!.getHttpServer()).get(path).set('X-Forwarded-For', '11.0.0.1');
+
+  it('keeps the guard global when global is undefined', async () => {
+    app = await createApp({ whitelist: ['10.0.0.0/8'], global: undefined });
+    assert.equal((await statusOf('/')).status, 403);
+  });
+
+  it('supports global: false with registerAsync', async () => {
+    app = await createAppFrom(
+      IpFilter.registerAsync({
+        useFactory: () => ({ whitelist: ['10.0.0.0/8'] }),
+        global: false,
+      }),
+    );
+    assert.equal((await statusOf('/')).status, 200);
+    assert.equal((await statusOf('/guarded')).status, 403);
+  });
+
+  it('lets other modules use IpFilterGuard', async () => {
+    app = await createApp({ whitelist: ['10.0.0.0/8'], global: false });
+    assert.equal((await statusOf('/feature')).status, 403);
   });
 });

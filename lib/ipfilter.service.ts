@@ -7,16 +7,21 @@ const familyOf = (address: string) => (isIP(address) === 6 ? 'ipv6' : 'ipv4');
 
 // Accepts "address" or "address/prefix", IPv4 or IPv6.
 function toBlockList(rules: string[]): BlockList {
+  if (!Array.isArray(rules)) {
+    throw new Error(`IP filter rules must be an array, got ${typeof rules}`);
+  }
   const list = new BlockList();
   for (const raw of rules) {
-    const [address, prefix, ...rest] = raw.trim().split('/');
+    const [address, prefix, ...rest] = String(raw).trim().split('/');
     const family = isIP(address);
     const maxPrefix = family === 4 ? 32 : 128;
     if (
       family === 0 ||
       rest.length > 0 ||
       (prefix !== undefined &&
-        (!/^\d+$/.test(prefix) || Number(prefix) > maxPrefix))
+        (!/^\d+$/.test(prefix) || Number(prefix) > maxPrefix)) ||
+      // An IPv6 prefix under 96 on a mapped address spans all of IPv4: ::ffff:192.168.0.0/16 is 0::/16.
+      (/^::ffff:/i.test(address) && prefix !== undefined && Number(prefix) < 96)
     ) {
       throw new Error(`Invalid IP filter rule: "${raw}"`);
     }
@@ -43,12 +48,13 @@ export class IpFilterService {
     @Inject(MODULE_OPTIONS_TOKEN)
     readonly options: IpFilterModuleOptions,
   ) {
-    if (options.whitelist === undefined && options.blacklist === undefined) {
+    // null counts as not configured, like an empty YAML key or a NULL column.
+    if (options.whitelist == null && options.blacklist == null) {
       throw new Error('IpFilter: configure "whitelist", "blacklist" or both');
     }
     this.useDenyException = options.useDenyException ?? false;
-    if (options.whitelist) this.whitelist = options.whitelist;
-    if (options.blacklist) this.blacklist = options.blacklist;
+    if (options.whitelist != null) this.whitelist = options.whitelist;
+    if (options.blacklist != null) this.blacklist = options.blacklist;
   }
 
   get whitelist(): string[] | undefined {
