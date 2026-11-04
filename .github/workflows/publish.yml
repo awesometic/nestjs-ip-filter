@@ -1,33 +1,70 @@
 name: Publish
 
+# Manual release: bump the version and add its CHANGELOG.md section on main,
+# then run Actions → Publish → Run workflow. Pushing to main or a tag alone does not publish.
 on:
-  push:
-    tags: ['v*']
-  # For a tag pushed before this workflow existed, e.g. v1.0.0.
   workflow_dispatch:
-    inputs:
-      tag:
-        description: Tag to publish (e.g. v1.0.0)
-        required: true
 
 permissions:
-  id-token: write # npm trusted publishing (OIDC)
   contents: read
+
+concurrency:
+  group: nestjs-ip-filter-npm-publish
+  cancel-in-progress: false
 
 jobs:
   publish:
+    if: github.repository == 'awesometic/nestjs-ip-filter' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          ref: ${{ inputs.tag || github.ref }}
-      - uses: actions/setup-node@v6
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
+
+      - name: Use npm with trusted publishing support
+        run: npm install --global npm@11 --ignore-scripts --no-audit --no-fund
+
       - run: npm ci
-      - name: Check that the tag matches package.json
-        run: test "v$(node -p "require('./package.json').version")" = "${{ inputs.tag || github.ref_name }}"
-      # prepublishOnly runs lint, test and build.
-      - run: npm publish
+
+      - name: Run the complete release checks
+        run: |
+          npm run lint
+          npm test
+          npm run build
+          npm pack --dry-run
+
+      # npm exchanges the job's OIDC identity for a short-lived publish credential.
+      - name: Publish the package with OIDC
+        run: npm publish --ignore-scripts --provenance --access public
+
+  github-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Verify npm bytes and publish the GitHub Release
+        run: node scripts/github-release.mts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
