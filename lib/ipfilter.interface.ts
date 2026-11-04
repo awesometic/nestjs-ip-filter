@@ -4,7 +4,3 @@ export type IpFilterModuleOptions = {
 
   useDenyException?: boolean;
 };
-
-export interface IpFilterDenyHandler {
-  handle(): boolean;
-}

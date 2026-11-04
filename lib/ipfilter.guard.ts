@@ -23,14 +23,7 @@ export class IpFilterGuard implements CanActivate {
     const approved = this.ipFilterService.isAllowed(ipAddress);
 
     if (!approved && this.ipFilterService.useDenyException) {
-      throw new IpFilterDenyException(
-        {
-          clientIp: ipAddress,
-          whitelist: this.ipFilterService.whitelist,
-          blacklist: this.ipFilterService.blacklist,
-        },
-        403,
-      );
+      throw new IpFilterDenyException({ clientIp: ipAddress }, 403);
     }
 
     return approved;

@@ -93,23 +93,80 @@ describe('client IP', () => {
   });
 });
 
+describe('filter mode', () => {
+  it('applies the blacklist before the whitelist', async () => {
+    const options = { whitelist: ['10.0.0.0/8'], blacklist: ['10.0.0.5'] };
+    assert.equal(await statusFor(options, '10.0.0.5'), 403);
+    assert.equal(await statusFor(options, '10.0.0.6'), 200);
+    assert.equal(await statusFor(options, '11.0.0.1'), 403);
+  });
+
+  it('allows everyone not blacklisted when no whitelist is configured', async () => {
+    assert.equal(await statusFor({ blacklist: ['10.0.0.5'] }, '10.0.0.5'), 403);
+    assert.equal(await statusFor({ blacklist: ['10.0.0.5'] }, '11.0.0.1'), 200);
+    assert.equal(await statusFor({ blacklist: [] }, '11.0.0.1'), 200);
+  });
+
+  it('allows nobody with an empty whitelist', async () => {
+    assert.equal(await statusFor({ whitelist: [] }, '11.0.0.1'), 403);
+  });
+
+  it('rejects a config with neither list at startup', async () => {
+    await assert.rejects(createApp({}), /whitelist.*blacklist/);
+  });
+});
+
 describe('IpFilterService', () => {
-  it('changes rules only through the setters', async () => {
+  const clientRequest = () =>
+    request(app!.getHttpServer()).get('/').set('X-Forwarded-For', '11.0.0.1');
+
+  it('keeps the mode when the setters empty a list', async () => {
+    app = await createApp({ blacklist: ['10.0.0.5'] });
+    app.get<IpFilterService>(IPFILTER_TOKEN).blacklist = [];
+    assert.equal((await clientRequest()).status, 200);
+  });
+
+  it('applies rules from the setters', async () => {
     app = await createApp({ whitelist: ['10.0.0.0/8'] });
     const service = app.get<IpFilterService>(IPFILTER_TOKEN);
-    const get = () =>
-      request(app!.getHttpServer()).get('/').set('X-Forwarded-For', '11.0.0.1');
-
-    service.whitelist.push('11.0.0.1');
-    assert.equal((await get()).status, 403);
-
+    assert.equal((await clientRequest()).status, 403);
     service.whitelist = ['11.0.0.0/8'];
-    assert.equal((await get()).status, 200);
+    assert.equal((await clientRequest()).status, 200);
+  });
+
+  it('keeps unset lists apart from empty ones and returns copies', async () => {
+    app = await createApp({ whitelist: ['10.0.0.0/8'] });
+    const service = app.get<IpFilterService>(IPFILTER_TOKEN);
+    assert.equal(service.blacklist, undefined);
+    service.whitelist?.push('11.0.0.1');
+    assert.deepEqual(service.whitelist, ['10.0.0.0/8']);
   });
 
   it('rejects an invalid rule from the setter', async () => {
     app = await createApp({ whitelist: ['10.0.0.0/8'] });
     const service = app.get<IpFilterService>(IPFILTER_TOKEN);
     assert.throws(() => (service.blacklist = ['nope']), /nope/);
+  });
+
+  it('denies a request without a client IP', async () => {
+    app = await createApp({ blacklist: [] });
+    assert.equal(
+      app.get<IpFilterService>(IPFILTER_TOKEN).isAllowed(undefined),
+      false,
+    );
+  });
+});
+
+describe('deny exception', () => {
+  it('reports only the client IP', async () => {
+    app = await createApp({
+      whitelist: ['10.0.0.0/8'],
+      useDenyException: true,
+    });
+    const res = await request(app.getHttpServer())
+      .get('/')
+      .set('X-Forwarded-For', '11.0.0.1');
+    assert.equal(res.status, 403);
+    assert.deepEqual(res.body, { clientIp: '11.0.0.1' });
   });
 });

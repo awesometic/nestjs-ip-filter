@@ -33,22 +33,26 @@ function toBlockList(rules: string[]): BlockList {
 export class IpFilterService {
   useDenyException: boolean;
 
-  private _whitelist: string[] = [];
-  private _blacklist: string[] = [];
-  private whitelistRules = new BlockList();
-  private blacklistRules = new BlockList();
+  // undefined = not configured, which is not the same as an empty list.
+  private _whitelist?: string[];
+  private _blacklist?: string[];
+  private whitelistRules?: BlockList;
+  private blacklistRules?: BlockList;
 
   constructor(
     @Inject(MODULE_OPTIONS_TOKEN)
     readonly options: IpFilterModuleOptions,
   ) {
+    if (options.whitelist === undefined && options.blacklist === undefined) {
+      throw new Error('IpFilter: configure "whitelist", "blacklist" or both');
+    }
     this.useDenyException = options.useDenyException ?? false;
-    this.whitelist = options.whitelist ?? [];
-    this.blacklist = options.blacklist ?? [];
+    if (options.whitelist) this.whitelist = options.whitelist;
+    if (options.blacklist) this.blacklist = options.blacklist;
   }
 
-  get whitelist(): string[] {
-    return [...this._whitelist];
+  get whitelist(): string[] | undefined {
+    return this._whitelist && [...this._whitelist];
   }
 
   set whitelist(whitelist: string[]) {
@@ -56,8 +60,8 @@ export class IpFilterService {
     this._whitelist = [...whitelist];
   }
 
-  get blacklist(): string[] {
-    return [...this._blacklist];
+  get blacklist(): string[] | undefined {
+    return this._blacklist && [...this._blacklist];
   }
 
   set blacklist(blacklist: string[]) {
@@ -69,13 +73,10 @@ export class IpFilterService {
     if (!ip || isIP(ip) === 0) {
       return false;
     }
-    let approved = false;
-    if (this._whitelist.length > 0) {
-      approved = this.whitelistRules.check(ip, familyOf(ip));
+    const family = familyOf(ip);
+    if (this.blacklistRules?.check(ip, family)) {
+      return false;
     }
-    if (this._blacklist.length > 0) {
-      approved = !this.blacklistRules.check(ip, familyOf(ip));
-    }
-    return approved;
+    return this.whitelistRules?.check(ip, family) ?? true;
   }
 }
