@@ -1,14 +1,14 @@
 # NestJS IP Filter
 
-Now we can filter the incoming requests by setting the whitelist and the blacklist IP addresses.
+A NestJS guard that allows or denies requests by client IP address, using whitelists and blacklists of IPv4/IPv6 addresses and CIDR ranges.
 
-It will work using the built-in feature in NestJS, **Guard**, so it works like a charm as it should be and as much as it should do.
+## Requirements
 
-The Guard recognizes the requester's IP address using [@supercharge/request-ip](https://www.npmjs.com/package/request-ip) package.
+- NestJS 11 or 12
+- Node.js `^20.19.0 || >=22.12.0`
+- The Express platform (`@nestjs/platform-express`)
 
-## How to install
-
-Simply, install using NPM by the following command.
+## Install
 
 ```bash
 npm install nestjs-ip-filter
@@ -16,180 +16,148 @@ npm install nestjs-ip-filter
 
 ## Usage
 
-### Use Regex for the IP list
-
-> In Express-based framework, the incoming IP address will have prefix `::ffff:` characters. So if you have put `(^192.168.)` into the whitelist, it won't work because that regex describes it must have number `1` as a first character.
-> So for now, you should put that prefix for your regex string like `(^::ffff:192.168.)`. Will patch the source codes in the near future.
-
-You can use the Regex format string for the IP ranges.
-
-For a simple example, if you want to allow the private network hosts in `192.168.0.1/16`, you can write the Regex string like the below.
-
-```bash
-# 192.168.0.0 ~ 192.168.255.255
-(^192.168.)
-```
-
-Check the other use cases.
-
-```bash
-# 192.168.0.100 ~ 192.168.0.110
-(^192.168.0.1[0-1]0)
-
-# 172.16.16.10, 172.16.17.10, 172.16.18.10
-(^172.16.1[6-8].10)
-
-# 110~119.*
-(^11[0-9].*)
-```
-
-And, writing in this way also works on this package.
-
-But be aware of that you should write the Regex string very carefully to avoid allowing unwanted incoming IP addresses.
-
-### Basic usage for Whitelist
-
-You can initialize the dedicated Guard using non-async or async mode, as the other NestJS packages support.
-
-Use `register` for the static IP address list.
+Import `IpFilter` in your root module. The guard then applies to every route.
 
 ```typescript
-IpFilter.register({
-  whitelist: [
-    '(^::1)',
-    '(^192.168.)',
-    '127.0.0.1',
+import { Module } from '@nestjs/common';
+import { IpFilter } from 'nestjs-ip-filter';
+
+@Module({
+  imports: [
+    IpFilter.register({
+      whitelist: ['127.0.0.1', '::1', '192.168.0.0/16'],
+    }),
   ],
-}),
+})
+export class AppModule {}
 ```
 
-Or, use `registerAsync` for the provided IP addresses from the other Provider, such as ConfigModule or RepositoryModule for your database.
+Use `registerAsync` to load the lists from another provider, such as a config service or a database.
 
 ```typescript
-// If it would like to get the whitelist IPs from a config file,
-// and if MyConfigModule provides that
-
 IpFilter.registerAsync({
-  imports: [ MyConfigModule ],
-  inject: [ MyConfigService ],
-  useFactory: async (myConfigService: MyConfigService) => ({
-    whitelist: myConfigService.getWhitelist(),
+  imports: [ConfigModule],
+  inject: [ConfigService],
+  useFactory: (config: ConfigService) => ({
+    whitelist: config.get<string[]>('ipFilter.whitelist'),
+    blacklist: config.get<string[]>('ipFilter.blacklist'),
   }),
-}),
+});
 ```
 
-Yeah, you can use your method to provide some async data.
+### Rules
 
-After setting up the `IpFilter` module with the `register*` method, this will accept only the incoming requests for the given whitelist IP addresses.
-
-### Blacklist
-
-You can deny the requests that are from the blacklist IPs.
-
-Use `blacklist` option to let the Guard know the list.
+Each entry is an IPv4 or IPv6 address, or a CIDR range:
 
 ```typescript
-// If it would like to get the whitelist IPs from a config file,
-// and if MyConfigModule provides that
-
-IpFilter.registerAsync({
-  imports: [ MyConfigModule ],
-  inject: [ MyConfigService ],
-  useFactory: async (myConfigService: MyConfigService) => ({
-    whitelist: myConfigService.getWhitelist(),
-    blacklist: myConfigService.getBlacklist(),
-  }),
-}),
+'10.0.0.1'; // one address
+'10.0.0.0/8'; // 10.0.0.0 – 10.255.255.255
+'2001:db8::/32'; // an IPv6 range
 ```
 
-Then its NestJS Guard will deny all the IPs which are from the blacklist.
+IPv4-mapped IPv6 client addresses (`::ffff:10.1.2.3`) match IPv4 rules.
+An invalid entry throws when the module starts or when a list is set, so a typo never silently matches nothing.
 
-### Use IpFilterDenyException when denying a request
+### How a request is evaluated
 
-You can handle the denial condition by catching the HTTP exception.
+1. A client IP in the `blacklist` is denied.
+2. If a `whitelist` is configured, only client IPs in it are allowed. An empty whitelist (`[]`) allows nobody.
+3. If no `whitelist` is configured, every client IP not denied by step 1 is allowed.
 
-If you want to throw that `IpFilterDenyException` when denial, set the option `useDenyException` to `true`.
+At least one of `whitelist` and `blacklist` must be configured; otherwise the module throws at startup.
+This way a missing configuration value fails loudly instead of opening or closing everything.
+
+| `whitelist` | `blacklist` | Allowed |
+| --- | --- | --- |
+| `['10.0.0.0/8']` | not set | `10.0.0.0/8` only |
+| not set | `['10.0.0.5']` | everyone except `10.0.0.5` |
+| `['10.0.0.0/8']` | `['10.0.0.5']` | `10.0.0.0/8` except `10.0.0.5` |
+| `[]` | not set | nobody |
+| not set | `[]` | everyone |
+| not set | not set | throws at startup |
+
+### Behind a proxy or load balancer
+
+The guard uses `req.ip`, so the client IP follows Express's [`trust proxy`](https://expressjs.com/en/guide/behind-proxies.html) setting.
+Forwarded headers such as `X-Forwarded-For` are used only from proxies you trust; anyone else can forge them.
 
 ```typescript
-// If it would like to get the whitelist IPs from a config file,
-// and if MyConfigModule provides that
+import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
-IpFilter.registerAsync({
-  imports: [ MyConfigModule ],
-  inject: [ MyConfigService ],
-  useFactory: async (myConfigService: MyConfigService) => ({
-    whitelist: myConfigService.getWhitelist(),
-    blacklist: myConfigService.getBlacklist(),
-    useDenyException: true,
-  }),
-}),
+const app = await NestFactory.create<NestExpressApplication>(AppModule);
+app.set('trust proxy', 'loopback'); // or the proxy's address/CIDR, or the number of hops
 ```
 
-Then it will throw `IpFilterDenyException` when the request is denied for the given whitelist or the blacklist.
+Without it, every request behind a proxy appears to come from the proxy's address.
 
-So that, you can handle the denied request and can send a custom response on that handler, using NestJS **Exception Filter**.
+### Apply to some routes only
 
-When the Guard throws an exception, it will also carry some informative data like the incoming IP address, current whitelist and blacklist.
-
-### Inject IpFilterService
-
-If you want, you can inject `IpFilterService` into your code and can see current options you put when you initialize it. And, you can set the whitelist and the blacklist too.
-
-Inject the service using the `IPFILTER_TOKEN` module.
+Set `global: false` and add `IpFilterGuard` where you need it.
 
 ```typescript
-@Injectable()
-export class SomeService {
-  constructor(
-    @inject(IPFILTER_TOKEN)
-    private readonly ipFilterService: IpFilterService
-  ) {}
-  // ...
+@Module({
+  imports: [IpFilter.register({ whitelist: ['10.0.0.0/8'], global: false })],
+  controllers: [AdminController],
+})
+export class AdminModule {}
+
+@Controller('admin')
+@UseGuards(IpFilterGuard)
+export class AdminController {}
+```
+
+### Handle denied requests
+
+By default a denied request gets NestJS's standard `403 Forbidden`.
+With `useDenyException: true` the guard throws `IpFilterDenyException` instead, whose response is `{ clientIp }`, so you can catch it in an exception filter.
+
+```typescript
+@Catch(IpFilterDenyException)
+export class IpFilterDenyExceptionFilter implements ExceptionFilter {
+  catch(exception: IpFilterDenyException, host: ArgumentsHost) {
+    const { clientIp } = exception.getResponse() as { clientIp?: string };
+    host.switchToHttp().getResponse<Response>().status(403).json({ message: 'Forbidden', clientIp });
+  }
 }
 ```
 
-Then you can edit the whitelist, blacklist IP addresses dynamically.
+### Change the lists at runtime
+
+Inject `IpFilterService` with `IPFILTER_TOKEN`. Setting a list replaces it and applies to the next request; an invalid entry throws and keeps the previous list.
 
 ```typescript
-this.ipFilterService.whitelist = [ {NEW_WHITELIST} ];
-this.ipFilterService.blacklist = [ {NEW_BLACKLIST} ];
+@Injectable()
+export class IpRulesService {
+  constructor(@Inject(IPFILTER_TOKEN) private readonly ipFilter: IpFilterService) {}
+
+  allowOffice(cidr: string) {
+    this.ipFilter.whitelist = [...(this.ipFilter.whitelist ?? []), cidr];
+  }
+}
 ```
 
-## Example project
+The getters return a copy of the list, or `undefined` when that list is not configured. Emptying a list keeps the mode: an empty whitelist still allows nobody.
 
-This repository contains an example project of this `nestjs-ip-filter` package.
+## Migrating from 0.x
 
-Move to `example` directory and run the following commands.
+- **Rules are addresses and CIDR ranges, not regular expressions.** Rewrite `'(^192.168.)'` as `'192.168.0.0/16'` and drop the `::ffff:` prefix workaround. A regex entry now throws at startup.
+- **The client IP is `req.ip`.** 0.x read `X-Forwarded-For` and similar headers from anyone, which allowed spoofing. Behind a proxy, set [`trust proxy`](#behind-a-proxy-or-load-balancer).
+- **The blacklist no longer overrides the whitelist.** With both lists set, a client must be in the whitelist and not in the blacklist; 0.x let anyone outside the blacklist through.
+- **Configure at least one list.** 0.x denied everything when both lists were empty. Set `whitelist: []` to keep that behavior, for example when the lists are filled at runtime.
+- **`IpFilterDenyException` carries only `{ clientIp }`.** 0.x also sent both lists to the denied client.
+- **The getters return `string[] | undefined`.**
+- NestJS 11 or 12 and Node.js `^20.19.0 || >=22.12.0` are required.
+
+## Development
 
 ```bash
 npm ci
-npm start:debug
+npm run lint
+npm test
+npm run build
 ```
-
-Then, the example project will run in **3001** port.
-
-With the `curl` command, you can do a simple test for the project.
-
-```bash
-curl -X GET -H "Content-Type: application/json" http://localhost:3001/ipfilter
-```
-
-It will result like the below, if your localhost IP is accepted for the whitelist.
-
-```bash
-{"whitelist":["(^::1)","(^192.168.)","127.0.0.1"],"blacklist":[]}
-```
-
-If it denies, it will result like the below. Check the `ipFilterData` field.
-
-```bash
-{"statusCode":403,"timestamp":"2022-06-13T09:29:40.452Z","ipFilterData":{"clientIp":"::ffff:127.0.0.1","whitelist":["(^::1)","(^192.168.)"],"blacklist":[]},"path":"/ipfilter"}
-```
-
-[Our exception filter](example/src/exception/ipfilter-exception-filter.exception.ts) put that additional field on the typical HttpException results.
-
-You can test the projects with your local host IP address, [by editing the whitelist and the blacklist](example/src/ip-repository/ip-repository.service.ts).
 
 ## License
 
-It follows the [MIT license](LICENSE).
+[MIT](LICENSE)

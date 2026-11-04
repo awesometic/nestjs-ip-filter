@@ -1,6 +1,6 @@
 {
   "name": "nestjs-ip-filter",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "A NestJS Guard for filtering IP addresses",
   "author": "Deokgyu Yang <secugyu@gmail.com>",
   "keywords": [
@@ -21,7 +21,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

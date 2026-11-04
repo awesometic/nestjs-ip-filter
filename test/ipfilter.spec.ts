@@ -146,6 +146,9 @@ describe('IpFilterService', () => {
     app = await createApp({ whitelist: ['10.0.0.0/8'] });
     const service = app.get<IpFilterService>(IPFILTER_TOKEN);
     assert.throws(() => (service.blacklist = ['nope']), /nope/);
+    assert.throws(() => (service.whitelist = ['11.0.0.0/8', 'nope']), /nope/);
+    assert.deepEqual(service.whitelist, ['10.0.0.0/8']);
+    assert.equal(service.blacklist, undefined);
   });
 
   it('denies a request without a client IP', async () => {
