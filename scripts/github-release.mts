@@ -202,7 +202,7 @@ export async function publishGitHubRelease(
   if (existingTag && (target?.type !== 'commit' || target.sha !== sha))
     throw new Error(`${tag} has no matching commit; it will not be moved.`);
   // releases/tags/{tag} hides drafts, so a retry finds its draft in the list instead.
-  // ponytail: first page only; the newest release is always on it.
+  // One page is enough: releases are listed newest first, drafts included.
   const releases = (await github(`${api}/releases?per_page=100`)) as Release[];
   let release = releases.find((item) => item.tag_name === tag) ?? null;
   if (release && !existingTag)
