@@ -164,6 +164,8 @@ npm test
 npm run build
 ```
 
+AI coding agents start at [AGENTS.md](AGENTS.md); [docs/CAPABILITY_BRIEF.md](docs/CAPABILITY_BRIEF.md) is a short tour of what the library does and how.
+
 ## License
 
 [MIT](LICENSE)

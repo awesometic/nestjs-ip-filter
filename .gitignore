@@ -399,3 +399,12 @@ dist
 
 # Compiled tests
 .test-dist/
+
+# Agent harness records stay local; the harness READMEs are tracked
+docs/loop/*
+!docs/loop/README.md
+docs/decisions/*
+!docs/decisions/README.md
+docs/plan/*
+!docs/plan/README.md
+!docs/plan/DELETE_EXISTS.md
