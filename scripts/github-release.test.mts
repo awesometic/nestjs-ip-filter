@@ -5,7 +5,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, test } from 'node:test';
 import timers from 'node:timers/promises';
-import { publishGitHubRelease, releaseNotes } from './github-release.mts';
+import {
+  checkRelease,
+  publishGitHubRelease,
+  releaseNotes,
+} from './github-release.mts';
 
 const sha = 'a'.repeat(40);
 const archive = Buffer.from([0x1f, 0x8b, 0x00, 0xff, 0x11]);
@@ -22,6 +26,7 @@ const env = {
 type Asset = { name: string; state: string; digest: string; size: number };
 type FakeRelease = {
   id: number;
+  tag_name: string;
   draft: boolean;
   assets: Asset[];
   html_url: string;
@@ -113,8 +118,9 @@ function fixture() {
       );
     if (method === 'GET' && path.endsWith(`/git/tags/${'c'.repeat(40)}`))
       return json({ object: { type: 'commit', sha: remote.tagSHA } });
-    if (method === 'GET' && path.endsWith('/releases/tags/v1.2.3'))
-      return json(remote.release, remote.release ? 200 : 404);
+    // Like GitHub, only the release list shows drafts; releases/tags/{tag} is deliberately not mocked.
+    if (method === 'GET' && path.endsWith('/releases'))
+      return json(remote.release ? [remote.release] : []);
     if (method === 'POST' && path.endsWith('/git/refs')) {
       assert.deepEqual(body, { ref: 'refs/tags/v1.2.3', sha });
       remote.tagSHA = sha;
@@ -131,6 +137,7 @@ function fixture() {
       });
       remote.release = {
         id: 10,
+        tag_name: 'v1.2.3',
         draft: true,
         assets: [],
         html_url:
@@ -179,6 +186,7 @@ function fixture() {
 function existingRelease(draft: boolean, assets: Asset[]): FakeRelease {
   return {
     id: 10,
+    tag_name: 'v1.2.3',
     draft,
     assets,
     html_url:
@@ -401,6 +409,11 @@ test('publishing remains manual with a dependent release job and scoped write pe
   assert.match(npm, /github\.ref == 'refs\/heads\/main'/);
   assert.match(npm, /contents: read\n {6}id-token: write/);
   assert.doesNotMatch(npm, /contents: write/);
+  assert.match(
+    npm,
+    /run: node scripts\/github-release\.mts --check\n[\s\S]*run: npm publish/,
+    'release inputs are checked before anything reaches npm',
+  );
   assert.ok(
     npm
       .trimEnd()
@@ -426,4 +439,21 @@ test('release notes are the CHANGELOG section of the version', () => {
   assert.equal(releaseNotes(changelog, '1.2.3'), '### Fixed\n\n- A.');
   assert.equal(releaseNotes(changelog, '1.2.30'), 'Other.');
   assert.equal(releaseNotes(changelog, '9.9.9'), '');
+});
+
+test('pre-publish check passes only for an unpublished version with release notes', async () => {
+  const f = fixture();
+  f.remote.metadataStatus = 404;
+  await checkRelease(f.root, f.request);
+  f.remote.metadataStatus = 200;
+  await assert.rejects(checkRelease(f.root, f.request), /already on npm/);
+  f.remote.metadataStatus = 500;
+  await assert.rejects(checkRelease(f.root, f.request), /HTTP 500/);
+  const calls = f.calls.length;
+  writeFileSync(
+    join(f.root, 'CHANGELOG.md'),
+    '# Changelog\n\n## 1.2.2\n\nOlder notes.\n',
+  );
+  await assert.rejects(checkRelease(f.root, f.request), /missing in CHANGELOG/);
+  assert.equal(f.calls.length, calls, 'missing notes never reach the network');
 });

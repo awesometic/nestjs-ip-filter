@@ -20,7 +20,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           ref: ${{ github.sha }}
@@ -34,6 +34,10 @@ jobs:
 
       - name: Use npm with trusted publishing support
         run: npm install --global npm@11 --ignore-scripts --no-audit --no-fund
+
+      # Fail before npm publish if the release job could not finish afterwards.
+      - name: Check the version and its CHANGELOG.md section
+        run: node scripts/github-release.mts --check
 
       - run: npm ci
 
@@ -54,7 +58,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
           persist-credentials: false

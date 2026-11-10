@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 type Asset = { name: string; state: string; digest: string; size: number };
 type Release = {
   id: number;
+  tag_name: string;
   draft: boolean;
   assets: Asset[];
   html_url: string;
@@ -23,29 +24,13 @@ export function releaseNotes(changelog: string, version: string): string {
   return section ? section.slice(section.indexOf('\n') + 1).trim() : '';
 }
 
-export async function publishGitHubRelease(
-  root: string,
-  env: NodeJS.ProcessEnv,
-  request: typeof fetch = fetch,
-): Promise<string> {
+function releaseInputs(root: string) {
   const { name, version } = JSON.parse(
     readFileSync(join(root, 'package.json'), 'utf8'),
   );
-  const repository = 'awesometic/nestjs-ip-filter';
-  const sha = env.GITHUB_SHA;
-  if (
-    name !== 'nestjs-ip-filter' ||
-    !/^\d+\.\d+\.\d+$/.test(version) ||
-    env.GITHUB_REPOSITORY !== repository ||
-    !sha ||
-    !/^[a-f0-9]{40}$/.test(sha) ||
-    !env.GITHUB_TOKEN
-  ) {
-    throw new Error(
-      "A stable nestjs-ip-filter version and the publishing workflow's repository, SHA and token are required.",
-    );
+  if (name !== 'nestjs-ip-filter' || !/^\d+\.\d+\.\d+$/.test(version)) {
+    throw new Error('A stable nestjs-ip-filter version is required.');
   }
-  const tag = `v${version}`;
   const body = releaseNotes(
     readFileSync(join(root, 'CHANGELOG.md'), 'utf8'),
     version,
@@ -54,6 +39,51 @@ export async function publishGitHubRelease(
     throw new Error(
       `Release notes for ${version} are empty or missing in CHANGELOG.md.`,
     );
+  return { name: name as string, version: version as string, body };
+}
+
+// Runs before npm publish: anything that would strand the release job must fail here.
+export async function checkRelease(
+  root: string,
+  request: typeof fetch = fetch,
+): Promise<void> {
+  const { name, version } = releaseInputs(root);
+  const response = await request(
+    `https://registry.npmjs.org/${name}/${version}`,
+    {
+      redirect: 'error',
+      headers: { 'Cache-Control': 'no-cache' },
+      signal: AbortSignal.timeout(30_000),
+    },
+  );
+  await response.body?.cancel();
+  if (response.ok)
+    throw new Error(
+      `${name}@${version} is already on npm; bump the version first.`,
+    );
+  if (response.status !== 404)
+    throw new Error(`npm registry check failed (HTTP ${response.status}).`);
+}
+
+export async function publishGitHubRelease(
+  root: string,
+  env: NodeJS.ProcessEnv,
+  request: typeof fetch = fetch,
+): Promise<string> {
+  const repository = 'awesometic/nestjs-ip-filter';
+  const sha = env.GITHUB_SHA;
+  if (
+    env.GITHUB_REPOSITORY !== repository ||
+    !sha ||
+    !/^[a-f0-9]{40}$/.test(sha) ||
+    !env.GITHUB_TOKEN
+  ) {
+    throw new Error(
+      "The publishing workflow's repository, SHA and token are required.",
+    );
+  }
+  const { name, version, body } = releaseInputs(root);
+  const tag = `v${version}`;
   const archiveName = `${name}-${version}.tgz`;
   const tarballUrl = `https://registry.npmjs.org/${name}/-/${archiveName}`;
   const deadline = Date.now() + 20 * 60_000;
@@ -171,7 +201,10 @@ export async function publishGitHubRelease(
     ).object;
   if (existingTag && (target?.type !== 'commit' || target.sha !== sha))
     throw new Error(`${tag} has no matching commit; it will not be moved.`);
-  let release = (await github(`${api}/releases/tags/${tag}`)) as Release | null;
+  // releases/tags/{tag} hides drafts, so a retry finds its draft in the list instead.
+  // ponytail: first page only; the newest release is always on it.
+  const releases = (await github(`${api}/releases?per_page=100`)) as Release[];
+  let release = releases.find((item) => item.tag_name === tag) ?? null;
   if (release && !existingTag)
     throw new Error(`Existing release ${tag} has no verifiable tag.`);
   if (!existingTag)
@@ -234,9 +267,11 @@ if (
   resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
   try {
-    process.stdout.write(
-      `${await publishGitHubRelease(process.cwd(), process.env)}\n`,
-    );
+    if (process.argv[2] === '--check') await checkRelease(process.cwd());
+    else
+      process.stdout.write(
+        `${await publishGitHubRelease(process.cwd(), process.env)}\n`,
+      );
   } catch (error) {
     process.stderr.write(
       `GitHub release: ${error instanceof Error ? error.message : String(error)}\n`,
