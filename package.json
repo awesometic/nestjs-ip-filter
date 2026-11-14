@@ -29,9 +29,9 @@
   },
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.json",
-    "format": "prettier --write \"{lib,test}/**/*.ts\"",
-    "lint": "eslint \"{lib,test}/**/*.ts\"",
-    "test": "rm -rf .test-dist && tsc -p test/tsconfig.json && node --test .test-dist/test/ipfilter.spec.js",
+    "format": "prettier --write \"{lib,test}/**/*.ts\" \"scripts/*.mts\"",
+    "lint": "eslint \"{lib,test}/**/*.ts\" \"scripts/*.mts\"",
+    "test": "rm -rf .test-dist && tsc -p test/tsconfig.json && node --test .test-dist/test/ipfilter.spec.js && tsc -p scripts/tsconfig.json && node --experimental-strip-types --test scripts/github-release.test.mts",
     "prepublishOnly": "npm run lint && npm test && npm run build"
   },
   "peerDependencies": {
@@ -57,6 +57,6 @@
     "rxjs": "7.8.2",
     "supertest": "7.3.2",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.72.1"
+    "typescript-eslint": "8.72.2"
   }
 }
