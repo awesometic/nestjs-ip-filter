@@ -1,17 +1,37 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
-  "schedule": ["every weekend"],
+  "timezone": "Asia/Seoul",
+  "schedule": ["* 0-5 * * 6"],
+  "commitHourlyLimit": 2,
   "platformAutomerge": false,
+  "major": {
+    "dependencyDashboardApproval": true,
+    "automerge": false
+  },
   "packageRules": [
-    {
-      "matchDepTypes": ["devDependencies"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "automerge": true
-    },
     {
       "matchPackageNames": ["@nestjs/**"],
       "groupName": "nest"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "dev dependencies (non-major)",
+      "automerge": true
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["pin", "pinDigest", "digest"],
+      "groupName": "GitHub Actions digests",
+      "automerge": true
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["peerDependencies", "engines"],
+      "dependencyDashboardApproval": true,
+      "automerge": false
     },
     {
       "matchPackageNames": ["@types/node"],
